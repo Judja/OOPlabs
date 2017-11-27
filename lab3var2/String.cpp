@@ -2,49 +2,47 @@
 
 //CONSTRUCTORS HERE
 cString::cString() {
-	printf("Void constructor\n");
+	//printf("Void constructor\n");
 	top = NULL;
 }
 
 cString::cString(const char *psz) {
-	printf("Copy from char* constructor\n");
+	//printf("Copy from char* constructor\n");
 	top = new Node;
 	Node *ptr;
 	ptr = top;
 	while (*psz != '\0') {
 		ptr->value = *psz;
 		psz++;
-		printf("%c", ptr->value);
+		//printf("%c", ptr->value);
 		ptr->next = new Node;
 		ptr = ptr->next;
 	}
-	printf("%s\n", "\\0");
 	ptr->next = NULL;
 	ptr->value = '\0';
 }
 
 cString::cString(const cString& stringsrc) {
-	printf("Copy from cString constructor\n");
+	//printf("Copy from cString constructor\n");
 	top = new Node;
 	Node *ptr, *ptrs;
 	ptrs = stringsrc.top;
 	ptr = top;
 	while (ptrs->next != NULL) {
 		ptr->value = ptrs->value;
-		printf("%c", ptr->value);
+		//printf("%c", ptr->value);
 		ptr->next = new Node;
 		ptr = ptr->next;
 		ptrs = ptrs->next;
 	}
-	printf("%s\n", "\\0");
 	ptr->next = NULL;
 	ptr->value = '\0';
 
 }
 //DESTRUCTOR
 cString::~cString() {
-	printf("DESTRUCTOR CALLED: ");
-	this->Empty();
+	//printf("DESTRUCTOR CALLED: ");
+	this->Empty();//calls Empty Method, cause destructor and Empty do the same in this class
 }
 //METHODS HERE
 int cString::Getlength() const {
@@ -65,15 +63,15 @@ bool cString::Isempty() const {
 }
 
 void cString::Empty() {
-	printf("Empty called, deleting:");
+	//printf("Empty called, deleting:");
 	Node *ptr;
 	while (top != NULL) {
 		ptr = top;
 		top = top->next;
-		printf(" %c", ptr->value);
+		//printf(" %c", ptr->value);
 		delete ptr;
 	}
-	printf("\n");
+	//printf("\n");
 }
 
 void cString::SetAt(int nindex, char ch) {
@@ -140,7 +138,9 @@ int cString::Find(char *pszsub) const {
 			found = true;
 			i = 0;
 			ptr2 = ptr->next;
-			while (pszsub[++i] != '\0') {
+			while (pszsub[++i] != '\0') {//If we find mathing for the first pszsub element,
+										//we check, whether all other elements of strings are
+										//equal and set flag found value
 				if (ptr2->value != pszsub[i]) {
 					found = false;
 					break;
@@ -188,11 +188,103 @@ cString& cString::operator +=(const cString& string) {
 	return *this;
 }
 
-cString& cString::operator =(const cString& stringsrc) {
+cString cString::Mid(int nfirst, int ncount) const {
+	cString temp("");
+	Node *ptrs = top, *ptr;
+	temp.top = new Node;
+	ptr = temp.top;
+	int len = Getlength();
 
+	if (ncount == 0 || nfirst + ncount >= len)
+		ncount = len - nfirst;
+	if (nfirst < 0 || ncount < 0)
+		return temp;
+
+	while (nfirst-- > 0)
+		ptrs = ptrs->next;
+	while (ncount-- > 0) {
+		ptr->value = ptrs->value;
+		ptr->next = new Node;
+		ptr = ptr->next;
+		ptrs = ptrs->next;
+	}
+
+	ptr->next = NULL;
+	ptr->value = '\0';
+
+	return temp;
 }
 
-cString cString::Mid(int nfirst, int ncount) const {
+cString cString::Left(int ncount) const {
+	int len = Getlength();
+	if (ncount > len) ncount = len;
+	return Mid(0, ncount);
+}
 
-	return NULL;
+cString cString::Right(int ncount) const {
+	int len = Getlength();
+	if (ncount > len) ncount = len;
+
+	return Mid(len - ncount, ncount);
+}
+
+cString& cString::operator =(const cString& stringsrc) {
+	Empty();
+	Node *ptr, *ptrs = stringsrc.top;
+	if (ptrs == NULL) return *this;
+	top = new Node;
+	ptr = top;
+
+	while (ptrs->next != NULL) {
+		ptr->value = ptrs->value;
+		ptrs = ptrs->next;
+		ptr->next = new Node;
+		ptr = ptr->next;
+	}
+
+	ptr->value = '\0';
+	ptr->next = NULL;
+
+	return *this;
+}
+
+const cString& cString::operator =(const unsigned char* psz) {
+	Empty();
+	top = new Node;
+	Node *ptr;
+	ptr = top;
+	while (*psz != '\0') {
+		ptr->value = *psz;
+		psz++;
+		ptr->next = new Node;
+		ptr = ptr->next;
+	}
+	ptr->next = NULL;
+	ptr->value = '\0';
+
+	return *this;
+}
+
+char cString::operator [](int indx) {
+	Node *ptr = top;
+	int len = Getlength();
+	if (indx >= len || indx < 0) {
+		printf("And how should it work with wrong indexes?\n");
+		return '0';
+	}
+	//Here we know exactly, that given index is correct
+	while (indx != 0) {
+		indx--;
+		ptr = ptr->next;
+	}
+	return ptr->value;
+}
+
+cString cString::operator +(const cString& string) {
+cString temp;
+	//ÑHEATS: ON
+	temp += (*this);
+	temp += string;
+	//CHEATS: OFF
+	return temp;
 }
