@@ -97,5 +97,102 @@ void cString::SetAt(int nindex, char ch) {
 }
 
 int cString::Compare(const cString& s) const {
+	Node *ptr, *ptrs;
 
+	ptr = top;
+	ptrs = s.top;
+
+	while (ptr != NULL && ptrs != NULL) {
+		if (ptr->value != ptrs->value)
+			return (int)(ptr->value - ptrs->value);
+
+		ptr = ptr->next;
+		ptrs = ptrs->next;
+	}
+	//firts symbols are equal, but (this) string is longer
+	if (ptr != NULL) return 1;
+	//first symbols are equal, but s string is longer
+	if (ptrs != NULL) return -1;
+	//strings are equal
+	return 0;
+}
+
+int cString::Find(char ch) const {
+	int res = 0;
+	Node *ptr = top;
+	while (ptr != NULL) {
+		if (ptr->value == ch) return res;
+		ptr = ptr->next;
+		res++;
+	}
+	return -1;
+}
+
+int cString::Find(char *pszsub) const {
+	if (pszsub == NULL || *pszsub == '\0') return -1;
+	int res = 0;
+	Node *ptr = top, *ptr2;
+	bool found = false;
+	int i;
+
+	while (ptr != NULL) {
+		if (ptr->value == pszsub[0]) {
+			found = true;
+			i = 0;
+			ptr2 = ptr->next;
+			while (pszsub[++i] != '\0') {
+				if (ptr2->value != pszsub[i]) {
+					found = false;
+					break;
+				}
+				ptr2 = ptr2->next;
+			}
+			if (found) return res;
+		}
+		ptr = ptr->next;
+		res++;
+	}
+
+	return -1;
+}
+
+void cString::Print() {
+	Node *ptr = top;
+	if (ptr == NULL) return;
+	while (ptr->next != NULL) {
+		printf("%c", ptr->value);
+		ptr = ptr->next;
+	}
+}
+
+cString& cString::operator +=(const cString& string) {
+	Node *ptr, *ptrs = string.top;
+	if (ptrs == NULL || ptrs->next == NULL) return *this;
+	if (top == NULL) {
+		top = new Node;
+		top->next = NULL;
+	}
+	ptr = top;
+	while (ptr->next != NULL)
+		ptr = ptr->next;
+
+	while (ptrs->next != NULL) {
+		ptr->value = ptrs->value;
+		ptrs = ptrs->next;
+		ptr->next = new Node;
+		ptr = ptr->next;
+	}
+	ptr->next = NULL;
+	ptr->value = '\0';
+
+	return *this;
+}
+
+cString& cString::operator =(const cString& stringsrc) {
+
+}
+
+cString cString::Mid(int nfirst, int ncount) const {
+
+	return NULL;
 }
