@@ -3,41 +3,31 @@
 //CONSTRUCTORS HERE
 cString::cString() {
 	//printf("Void constructor\n");
-	top = NULL;
+	data = NULL;
+	length = 0;
 }
 
 cString::cString(const char *psz) {
 	//printf("Copy from char* constructor\n");
-	top = new Node;
-	Node *ptr;
-	ptr = top;
-	while (*psz != '\0') {
-		ptr->value = *psz;
-		psz++;
-		//printf("%c", ptr->value);
-		ptr->next = new Node;
-		ptr = ptr->next;
+	length = 0;
+	data = NULL;//This issigment is important
+	const char *ptr = psz;
+	if (ptr != NULL) {
+		while (*(ptr++) != '\0') length++;
+		data = new char[length];
+		memcpy(data, psz, sizeof(char) * length);
 	}
-	ptr->next = NULL;
-	ptr->value = '\0';
 }
 
 cString::cString(const cString& stringsrc) {
 	//printf("Copy from cString constructor\n");
-	top = new Node;
-	Node *ptr, *ptrs;
-	ptrs = stringsrc.top;
-	ptr = top;
-	while (ptrs->next != NULL) {
-		ptr->value = ptrs->value;
-		//printf("%c", ptr->value);
-		ptr->next = new Node;
-		ptr = ptr->next;
-		ptrs = ptrs->next;
-	}
-	ptr->next = NULL;
-	ptr->value = '\0';
-
+	length = stringsrc.length;
+	data = NULL;//This issigment is important
+	if (length != 0)
+		data = new char[length];
+	if (stringsrc.data != NULL) //when data = Null length = 0, right behaviour of 
+					//memcpy(0, 0, 0) is not guaranteed
+		memcpy(data, stringsrc.data, sizeof(char) * length);
 }
 //DESTRUCTOR
 cString::~cString() {
@@ -46,15 +36,7 @@ cString::~cString() {
 }
 //METHODS HERE
 int cString::Getlength() const {
-	if (top == NULL) return 0;
-	int res = 0;
-	Node *ptr = top;
-	while (ptr->next != NULL)
-	{
-		ptr = ptr->next;
-		res++;
-	}
-	return res;
+	return length;
 }
 
 bool cString::Isempty() const {
@@ -64,92 +46,76 @@ bool cString::Isempty() const {
 
 void cString::Empty() {
 	//printf("Empty called, deleting:");
-	Node *ptr;
-	while (top != NULL) {
-		ptr = top;
-		top = top->next;
-		//printf(" %c", ptr->value);
-		delete ptr;
-	}
-	//printf("\n");
+	length = 0;
+	delete[]data;
+	data = NULL;//now it looks like it was created with basic constructor
 }
 
 void cString::SetAt(int nindex, char ch) {
 	if (ch == '\0') {
-		printf("Do not break my programm\n");
-		return;
+		throw std::runtime_error("Invalid argument");
 	}
-	Node *ptr = top;
-	int len = Getlength();
-	if (nindex < 0) nindex = len + nindex; // -1 is last symbol, 0 is first, 1 is second one
-	if (nindex >= len || nindex < 0) {
-		printf("And how should it work with wrong indexes?\n");
+
+	if (nindex < 0) nindex = length + nindex; // -1 is last symbol, 0 is first, 1 is second one
+	if (nindex >= length || nindex < 0) {
+		throw std::runtime_error("Out of range");
 		return;
 	}
 	//Here we know exactly, that given index is correct
-	while (nindex != 0) {
-		nindex--;
-		ptr = ptr->next;
-	}
-	ptr->value = ch;
+	data[nindex] = ch;
 }
 
 int cString::Compare(const cString& s) const {
-	Node *ptr, *ptrs;
-
-	ptr = top;
-	ptrs = s.top;
-
-	while (ptr != NULL && ptrs != NULL) {
-		if (ptr->value != ptrs->value)
-			return (int)(ptr->value - ptrs->value);
-
-		ptr = ptr->next;
-		ptrs = ptrs->next;
+	//if s has no data, length = 0, so, there is no reason to check, 
+	//whether data pointers are equal to NULL
+	//we will use .NET String.Compare method logic: 
+	// - two empty strings are equal
+	// - any string > empty string
+	int i = 0;
+	while (i < length &&  i < s.length) {
+		if (data[i] != s.data[i])
+			return (int)(data[i] - s.data[i]);
+		i++;
 	}
 	//firts symbols are equal, but (this) string is longer
-	if (ptr != NULL) return 1;
+	if (length > s.length) return 1;
 	//first symbols are equal, but s string is longer
-	if (ptrs != NULL) return -1;
+	if (s.length > length) return -1;
 	//strings are equal
 	return 0;
 }
 
 int cString::Find(char ch) const {
 	int res = 0;
-	Node *ptr = top;
-	while (ptr != NULL) {
-		if (ptr->value == ch) return res;
-		ptr = ptr->next;
+	while (res < length) {
+		if (data[res] == ch) return res;
 		res++;
 	}
 	return -1;
 }
 
 int cString::Find(char *pszsub) const {
-	if (pszsub == NULL || *pszsub == '\0') return -1;
+	if (pszsub == NULL || *pszsub == '\0') {
+		throw std::runtime_error("Invalid argument");
+	}
 	int res = 0;
-	Node *ptr = top, *ptr2;
 	bool found = false;
 	int i;
 
-	while (ptr != NULL) {
-		if (ptr->value == pszsub[0]) {
+	while (res < length) {
+		if (data[res] == pszsub[0]) {
 			found = true;
 			i = 0;
-			ptr2 = ptr->next;
 			while (pszsub[++i] != '\0') {//If we find mathing for the first pszsub element,
 										//we check, whether all other elements of strings are
 										//equal and set flag found value
-				if (ptr2->value != pszsub[i]) {
+				if (data[res + i] != pszsub[i]) {
 					found = false;
 					break;
 				}
-				ptr2 = ptr2->next;
 			}
 			if (found) return res;
 		}
-		ptr = ptr->next;
 		res++;
 	}
 
@@ -157,60 +123,39 @@ int cString::Find(char *pszsub) const {
 }
 
 void cString::Print() {
-	Node *ptr = top;
-	if (ptr == NULL) return;
-	while (ptr->next != NULL) {
-		printf("%c", ptr->value);
-		ptr = ptr->next;
-	}
+	for (int i = 0; i < length; i++)
+		printf("%c", data[i]);
 }
 
 cString& cString::operator +=(const cString& string) {
-	Node *ptr, *ptrs = string.top;
-	if (ptrs == NULL || ptrs->next == NULL) return *this;
-	if (top == NULL) {
-		top = new Node;
-		top->next = NULL;
-	}
-	ptr = top;
-	while (ptr->next != NULL)
-		ptr = ptr->next;
-
-	while (ptrs->next != NULL) {
-		ptr->value = ptrs->value;
-		ptrs = ptrs->next;
-		ptr->next = new Node;
-		ptr = ptr->next;
-	}
-	ptr->next = NULL;
-	ptr->value = '\0';
-
+	if (string.length == 0) return *this;
+	//we will create a new array, copy both data there and assign this->data to new array
+	char *data2;
+	
+	data2 = new char[length + string.length];
+	//we can add smt to empty string, so
+	if (data != NULL) 
+		memcpy(data2, data, sizeof(char) * length);
+	memcpy(data2 + length, string.data, sizeof(char) * string.length);
+	length += string.length;
+	delete[]data;
+	data = data2;
 	return *this;
 }
 
 cString cString::Mid(int nfirst, int ncount) const {
-	cString temp("");
-	Node *ptrs = top, *ptr;
-	temp.top = new Node;
-	ptr = temp.top;
-	int len = Getlength();
+	cString temp;
 
-	if (ncount == 0 || nfirst + ncount >= len)
-		ncount = len - nfirst;
+	if (ncount == 0 || nfirst + ncount >= length)
+		ncount = length - nfirst;
 	if (nfirst < 0 || ncount < 0)
 		return temp;
 
-	while (nfirst-- > 0)
-		ptrs = ptrs->next;
+	temp.length = ncount;
+	temp.data = new char[ncount];
 	while (ncount-- > 0) {
-		ptr->value = ptrs->value;
-		ptr->next = new Node;
-		ptr = ptr->next;
-		ptrs = ptrs->next;
+		temp.data[ncount] = data[nfirst + ncount];
 	}
-
-	ptr->next = NULL;
-	ptr->value = '\0';
 
 	return temp;
 }
@@ -230,54 +175,34 @@ cString cString::Right(int ncount) const {
 
 cString& cString::operator =(const cString& stringsrc) {
 	Empty();
-	Node *ptr, *ptrs = stringsrc.top;
-	if (ptrs == NULL) return *this;
-	top = new Node;
-	ptr = top;
+	if (stringsrc.length == 0) return *this;
 
-	while (ptrs->next != NULL) {
-		ptr->value = ptrs->value;
-		ptrs = ptrs->next;
-		ptr->next = new Node;
-		ptr = ptr->next;
-	}
-
-	ptr->value = '\0';
-	ptr->next = NULL;
+	length = stringsrc.length;
+	data = new char[length];
+	memcpy(data, stringsrc.data, sizeof(char) * length);
 
 	return *this;
 }
 
 const cString& cString::operator =(const unsigned char* psz) {
 	Empty();
-	top = new Node;
-	Node *ptr;
-	ptr = top;
-	while (*psz != '\0') {
-		ptr->value = *psz;
-		psz++;
-		ptr->next = new Node;
-		ptr = ptr->next;
+
+	const unsigned char *ptr = psz;
+	if (ptr != NULL) {
+		while (*(ptr++) != '\0') length++;
+		data = new char[length];
+		memcpy(data, psz, sizeof(char) * length);
 	}
-	ptr->next = NULL;
-	ptr->value = '\0';
 
 	return *this;
 }
 
 char cString::operator [](int indx) {
-	Node *ptr = top;
-	int len = Getlength();
-	if (indx >= len || indx < 0) {
-		printf("And how should it work with wrong indexes?\n");
-		return '0';
+	if (indx >= length || indx < 0) {
+		throw std::runtime_error("Out of range");
 	}
 	//Here we know exactly, that given index is correct
-	while (indx != 0) {
-		indx--;
-		ptr = ptr->next;
-	}
-	return ptr->value;
+	return data[indx];
 }
 
 cString cString::operator +(const cString& string) {

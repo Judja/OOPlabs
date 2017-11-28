@@ -8,11 +8,7 @@
 #pragma once
 #include <string.h>
 #include <stdio.h>
-
-struct Node {
-	char value;
-	Node *next;
-};
+#include <stdexcept> 
 
 class cString {
 public:
@@ -47,6 +43,7 @@ public:
 	void Print();
 private:
 	//put your own data members here
-	Node *top;
+	int length;
+	char *data;
 };
 
