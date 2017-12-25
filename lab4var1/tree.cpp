@@ -10,8 +10,11 @@ CTreeNode::CTreeNode() {
 	left = NULL;
 	right = NULL;
 }
-
+//if we use smt likr this 	CTreeNode Test(*(tree.GetRoot()));
+//for empty tree, &k will be NULL
+//in this case, we throw exception, cause we do not need "Empty" nodes in our tree
 CTreeNode::CTreeNode(CTreeNode& k) {
+	if (&k == NULL) throw std::runtime_error("Invalid argument for node copy constructor");
 	m_Bookid = k.m_Bookid;
 	m_Author = k.m_Author;
 	m_Title = k.m_Title;
@@ -44,6 +47,7 @@ CBinTree::CBinTree() {
 }
 //.csv file parsing
 CBinTree::CBinTree(char *file) {
+	root = NULL;
 	FILE *csvFile = NULL;
 	char buf[256], buf2[20];
 	CTreeNode node;
@@ -51,7 +55,7 @@ CBinTree::CBinTree(char *file) {
 
 	csvFile = fopen(file, "r");
 
-	if (csvFile != NULL) {
+	if (csvFile != NULL) {//if csvFile == NULL => we just get empty tree with root == NULL
 		while (!feof(csvFile)) {
 			fgets(buf, 255, csvFile);
 			j = -1;
